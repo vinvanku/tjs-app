@@ -2,7 +2,7 @@
 Telangana Jobs Scraper
 ======================
 Scrapes government job notifications from:
-  1. TSPSC (Telangana State Public Service Commission) - tspsc.gov.in
+  1. TGPSC (Telangana Government Public Service Commission) - tgpsc.gov.in
   2. Sakshi Education - sakshieducation.com
 
 Inserts deduplicated results into Supabase with automatic categorization.
@@ -40,11 +40,12 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
-TSPSC_BASE_URL = "https://www.tspsc.gov.in"
-TSPSC_NOTIFICATIONS_URL = f"{TSPSC_BASE_URL}/notifications"
+TGPSC_BASE_URL = "https://www.tgpsc.gov.in"
+TGPSC_NEW_URL = "https://websitenew.tgpsc.gov.in"
+TGPSC_NOTIFICATIONS_URL = TGPSC_NEW_URL  # Main page lists all notifications
 
-SAKSHI_BASE_URL = "https://www.sakshieducation.com"
-SAKSHI_JOBS_URL = f"{SAKSHI_BASE_URL}/jobs/notifications"
+SAKSHI_BASE_URL = "https://education.sakshi.com"
+SAKSHI_JOBS_URL = f"{SAKSHI_BASE_URL}/notifications/govt-jobs"
 
 HEADERS = {
     "User-Agent": (
@@ -243,35 +244,35 @@ def extract_vacancies(text: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Scraper: TSPSC
+# Scraper: TGPSC
 # ---------------------------------------------------------------------------
 
-def scrape_tspsc() -> list[JobListing]:
+def scrape_tgpsc() -> list[JobListing]:
     """
-    Scrape job notifications from TSPSC (Telangana State Public Service Commission).
+    Scrape job notifications from TGPSC (Telangana Government Public Service Commission).
 
-    Targets: https://www.tspsc.gov.in/notifications
+    Targets: https://www.tgpsc.gov.in/notifications
 
     Returns:
         List of JobListing objects.
     """
     jobs: list[JobListing] = []
-    logger.info("Scraping TSPSC notifications...")
+    logger.info("Scraping TGPSC notifications...")
 
     try:
         response = requests.get(
-            TSPSC_NOTIFICATIONS_URL,
+            TGPSC_NOTIFICATIONS_URL,
             headers=HEADERS,
             timeout=REQUEST_TIMEOUT,
         )
         response.raise_for_status()
     except requests.RequestException as e:
-        logger.error(f"Failed to fetch TSPSC page: {e}")
+        logger.error(f"Failed to fetch TGPSC page: {e}")
         return jobs
 
     soup = BeautifulSoup(response.content, "lxml")
 
-    # TSPSC uses a table-based notification listing
+    # TGPSC uses a table-based notification listing
     # Look for notification rows in tables or divs
     notification_rows = soup.select(
         "table.table tbody tr, "
@@ -283,7 +284,7 @@ def scrape_tspsc() -> list[JobListing]:
     if not notification_rows:
         # Fallback: try to find any links with notification-like text
         notification_rows = soup.select("table tr")
-        logger.info(f"Fallback: found {len(notification_rows)} table rows")
+        logger.info(f"TGPSC fallback: found {len(notification_rows)} table rows")
 
     for row in notification_rows:
         try:
@@ -302,8 +303,7 @@ def scrape_tspsc() -> list[JobListing]:
                 continue
 
             # Get source URL
-            href = link.get("href", "")
-            source_url = href if href.startswith("http") else f"{TSPSC_BASE_URL}{href}"
+            source_url = href if href.startswith("http") else f"{TGPSC_NEW_URL}{href}"
 
             # Extract cells for date and vacancy info
             cells = row.select("td")
@@ -332,7 +332,7 @@ def scrape_tspsc() -> list[JobListing]:
             category = detect_category(title)
 
             # Determine organization
-            organization = "TSPSC (Telangana State Public Service Commission)"
+            organization = "TGPSC"
 
             job = JobListing(
                 title=title,
@@ -340,16 +340,16 @@ def scrape_tspsc() -> list[JobListing]:
                 vacancies=vacancies if vacancies > 0 else 1,
                 category=category,
                 last_date=last_date_str,
-                source="tspsc",
+                source="tgpsc",
                 source_url=source_url,
             )
             jobs.append(job)
 
         except Exception as e:
-            logger.warning(f"Error parsing TSPSC row: {e}")
+            logger.warning(f"Error parsing TGPSC row: {e}")
             continue
 
-    logger.info(f"TSPSC: scraped {len(jobs)} notifications")
+    logger.info(f"TGPSC: scraped {len(jobs)} notifications")
     return jobs
 
 
@@ -411,7 +411,7 @@ def scrape_sakshi_jobs() -> list[JobListing]:
 
             # Filter for Telangana-specific jobs
             telangana_keywords = [
-                "telangana", "tspsc", "ts", "hyderabad", "tslprb",
+                "telangana", "tgpsc", "tspsc", "ts", "hyderabad", "tslprb",
                 "tsgenco", "tstransco", "tsrtc", "hmda", "ghmc",
                 "kaleshwaram", "singareni",
             ]
@@ -453,7 +453,7 @@ def scrape_sakshi_jobs() -> list[JobListing]:
 
             # Try to determine organization from title
             org_patterns = {
-                "TSPSC": r"\btspsc\b",
+                "TGPSC": r"\btgpsc\b|\btspsc\b",
                 "TSLPRB (TS Police Recruitment Board)": r"\btslprb\b|\bts\s*police\b",
                 "TSGENCO": r"\btsgenco\b",
                 "TSTRANSCO": r"\btstransco\b",
@@ -511,7 +511,7 @@ def job_exists(client: Client, title: str, source: str) -> bool:
     Args:
         client: Supabase client instance.
         title: Job title to check.
-        source: Source identifier (e.g., 'tspsc', 'sakshi').
+        source: Source identifier (e.g., 'tgpsc', 'sakshi').
 
     Returns:
         True if job already exists, False otherwise.
@@ -624,7 +624,7 @@ def main():
     """
     Main function orchestrating the scraping pipeline.
 
-    1. Scrapes TSPSC notifications
+    1. Scrapes TGPSC notifications
     2. Scrapes Sakshi Education jobs
     3. Deduplicates and inserts new jobs
     4. Marks expired jobs as inactive
@@ -638,16 +638,16 @@ def main():
     # Scrape from all sources
     all_jobs: list[JobListing] = []
 
-    # Source 1: TSPSC
-    tspsc_jobs = scrape_tspsc()
-    all_jobs.extend(tspsc_jobs)
+    # Source 1: TGPSC
+    tgpsc_jobs = scrape_tgpsc()
+    all_jobs.extend(tgpsc_jobs)
 
     # Source 2: Sakshi Education
     sakshi_jobs = scrape_sakshi_jobs()
     all_jobs.extend(sakshi_jobs)
 
     logger.info(f"Total scraped: {len(all_jobs)} jobs "
-                f"(TSPSC: {len(tspsc_jobs)}, Sakshi: {len(sakshi_jobs)})")
+                f"(TGPSC: {len(tgpsc_jobs)}, Sakshi: {len(sakshi_jobs)})")
 
     if not all_jobs:
         logger.warning("No jobs scraped from any source. Exiting.")

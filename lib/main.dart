@@ -46,37 +46,65 @@ Future<void> main() async {
     ),
   );
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase (don't block if it fails)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase init failed: $e');
+  }
 
   // Set up background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('FCM background handler setup failed: $e');
+  }
 
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: AppConstants.supabaseUrl,
-    anonKey: AppConstants.supabaseAnonKey,
-  );
+  // Initialize Supabase (don't block if it fails)
+  try {
+    await Supabase.initialize(
+      url: AppConstants.supabaseUrl,
+      anonKey: AppConstants.supabaseAnonKey,
+    );
+  } catch (e) {
+    debugPrint('Supabase init failed: $e');
+  }
 
-  // Initialize local notifications
-  await _initializeLocalNotifications();
+  // Initialize local notifications (don't block if it fails)
+  try {
+    await _initializeLocalNotifications();
+  } catch (e) {
+    debugPrint('Local notifications init failed: $e');
+  }
 
   // Create the notification channel on Android
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(jobAlertsChannel);
+  try {
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(jobAlertsChannel);
+  } catch (e) {
+    debugPrint('Notification channel creation failed: $e');
+  }
 
   // Request notification permissions (iOS & Android 13+)
-  await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-    provisional: false,
-  );
+  try {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+  } catch (e) {
+    debugPrint('Permission request failed: $e');
+  }
 
   // Listen for foreground messages
-  FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+  try {
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+  } catch (e) {
+    debugPrint('Foreground message listener failed: $e');
+  }
 
   runApp(const TSJobsApp());
 }

@@ -8,11 +8,11 @@ class AppConstants {
   // SUPABASE CONFIGURATION
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Supabase project URL — replace with your actual project URL.
-  static const String supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co';
+  /// Supabase project URL.
+  static const String supabaseUrl = 'https://bkjkcdsvezviuytdwlzg.supabase.co';
 
-  /// Supabase anonymous key — replace with your actual anon key.
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  /// Supabase anonymous key.
+  static const String supabaseAnonKey = '[REDACTED_JWT]';
 
   // ─────────────────────────────────────────────────────────────────────────
   // COLOR SCHEME

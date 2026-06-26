@@ -307,7 +307,7 @@ class TSJobsApp extends StatelessWidget {
           color: Colors.white,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(

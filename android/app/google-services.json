@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "215445540272",
+    "project_id": "tjs-app-239f7",
+    "storage_bucket": "tjs-app-239f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215445540272:android:ceaf9e276a0c9a0a4c9a75",
+        "android_client_info": {
+          "package_name": "com.tsjobs.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE2X4bs5_8VnzPokx__MegRzgCQeFKRLA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

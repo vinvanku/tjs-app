@@ -6,15 +6,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'utils/constants.dart';
 
-// Placeholder page imports — replace with actual screen files
-// import 'screens/home_screen.dart';
-// import 'screens/login_screen.dart';
-// import 'screens/profile_setup_screen.dart';
-// import 'screens/job_detail_screen.dart';
-// import 'screens/saved_jobs_screen.dart';
-// import 'screens/search_screen.dart';
-// import 'screens/calendar_screen.dart';
-// import 'screens/profile_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/profile_setup_screen.dart';
+import 'screens/job_detail_screen.dart';
+import 'screens/saved_jobs_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/calendar_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH PROVIDER
@@ -110,7 +111,7 @@ class JobsProvider extends ChangeNotifier {
         query = query.contains('districts', [district]);
       }
 
-      final response = await query.order('posted_date', ascending: false);
+      final response = await query.order('created_at', ascending: false);
       _jobs = response as List<dynamic>;
 
       _featuredJobs =
@@ -188,8 +189,9 @@ final GoRouter _router = GoRouter(
     if (isLoading) return null;
 
     final isLoginRoute = state.matchedLocation == '/login';
+    final isOnboardingRoute = state.matchedLocation == '/onboarding';
 
-    if (!isAuthenticated && !isLoginRoute) {
+    if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute) {
       return '/login';
     }
 
@@ -203,48 +205,50 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Home'),
+      builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
       path: '/login',
       name: 'login',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Login'),
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
       path: '/profile-setup',
       name: 'profile-setup',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Profile Setup'),
+      builder: (context, state) => const ProfileSetupScreen(),
     ),
     GoRoute(
       path: '/job/:id',
       name: 'job-detail',
       builder: (context, state) {
         final jobId = state.pathParameters['id']!;
-        return _PlaceholderScreen(title: 'Job Detail: $jobId');
+        return JobDetailScreen(jobId: jobId);
       },
     ),
     GoRoute(
       path: '/saved',
       name: 'saved',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Saved Jobs'),
+      builder: (context, state) => const SavedJobsScreen(),
     ),
     GoRoute(
       path: '/search',
       name: 'search',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Search'),
+      builder: (context, state) => const SearchScreen(),
     ),
     GoRoute(
       path: '/calendar',
       name: 'calendar',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Calendar'),
+      builder: (context, state) => const CalendarScreen(),
     ),
     GoRoute(
       path: '/profile',
       name: 'profile',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Profile'),
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );

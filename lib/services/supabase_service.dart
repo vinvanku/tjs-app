@@ -52,7 +52,7 @@ class SupabaseService {
       }
 
       final response = await query
-          .order('posted_date', ascending: false)
+          .order('created_at', ascending: false)
           .order('created_at', ascending: false);
 
       return (response as List<dynamic>)

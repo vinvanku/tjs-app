@@ -97,14 +97,10 @@ def upsert_jobs(client: Client, jobs: list[dict]) -> dict:
                 'category': job.get('category', 'general'),
                 'vacancies': job.get('vacancies', 0) or 0,
                 'last_date': job.get('last_date'),
-                'apply_start_date': job.get('posted_date'),
                 'qualification': job.get('qualification', '')[:200] if job.get('qualification') else None,
-                'apply_url': job.get('apply_url'),
-                'pdf_url': job.get('pdf_url'),
+                'source_url': job.get('apply_url') or job.get('pdf_url'),
                 'source': job.get('source', 'manual'),
-                'districts': job.get('districts', ['All Telangana']),
-                'fee_general': job.get('fee_general', 0) or 0,
-                'fee_sc_st': job.get('fee_sc_st', 0) or 0,
+                'district': (job.get('districts', ['All Telangana']) or ['All Telangana'])[0] if isinstance(job.get('districts'), list) else job.get('districts', 'All Telangana'),
                 'is_active': True,
                 'updated_at': datetime.now().isoformat(),
             }
@@ -126,7 +122,6 @@ def upsert_jobs(client: Client, jobs: list[dict]) -> dict:
                 stats['updated'] += 1
             else:
                 # Insert new record
-                record['posted_date'] = datetime.now().isoformat()
                 client.table('jobs').insert(record).execute()
                 stats['inserted'] += 1
                 

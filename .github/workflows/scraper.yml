@@ -1,0 +1,39 @@
+name: TJS Scraper - Daily Job Sync
+
+on:
+  schedule:
+    # Run twice daily: 6 AM IST (00:30 UTC) and 6 PM IST (12:30 UTC)
+    - cron: '30 0 * * *'
+    - cron: '30 12 * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      - name: Run scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scraper/main.py
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::TJS Scraper failed! Check logs above."
+          echo "Last run: $(date -u '+%Y-%m-%d %H:%M UTC')"

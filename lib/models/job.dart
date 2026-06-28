@@ -181,12 +181,14 @@ class Job {
   /// Creates a [Job] from a JSON map (typically from Supabase response).
   factory Job.fromJson(Map<String, dynamic> json) {
     return Job(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      organization: json['organization'] as String,
-      category: json['category'] as String,
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      organization: json['organization'] as String? ?? '',
+      category: json['category'] as String? ?? '',
       vacancies: json['vacancies'] as int? ?? 0,
-      lastDate: DateTime.parse(json['last_date'] as String),
+      lastDate: json['last_date'] != null
+          ? DateTime.parse(json['last_date'] as String)
+          : DateTime.now().add(const Duration(days: 30)),
       examDate: json['exam_date'] != null
           ? DateTime.parse(json['exam_date'] as String)
           : null,
@@ -195,19 +197,23 @@ class Job {
       ageMax: json['age_max'] as int? ?? 44,
       districts: json['districts'] != null
           ? List<String>.from(json['districts'] as List)
-          : <String>[],
+          : json['district'] != null
+              ? [json['district'] as String]
+              : <String>[],
       salaryMin: (json['salary_min'] as num?)?.toDouble() ?? 0,
       salaryMax: (json['salary_max'] as num?)?.toDouble() ?? 0,
       feeGeneral: (json['fee_general'] as num?)?.toDouble() ?? 0,
       feeScSt: (json['fee_sc_st'] as num?)?.toDouble() ?? 0,
-      applyUrl: json['apply_url'] as String? ?? '',
+      applyUrl: json['apply_url'] as String? ?? json['source_url'] as String? ?? '',
       pdfUrl: json['pdf_url'] as String?,
       source: json['source'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
       isFeatured: json['is_featured'] as bool? ?? false,
       postedDate: json['posted_date'] != null
           ? DateTime.parse(json['posted_date'] as String)
-          : DateTime.now(),
+          : json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
       description: json['description'] as String? ?? '',
       district: json['district'] as String? ?? 'All Telangana',
       isBookmarked: json['is_bookmarked'] as bool? ?? false,

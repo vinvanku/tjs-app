@@ -26,30 +26,18 @@ final GoRouter _router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) {
     final authProvider = context.read<AuthProvider>();
     final isAuthenticated = authProvider.isAuthenticated;
-    final isLoading = authProvider.isLoading;
-
-    // Don't redirect while auth state is still being determined
-    // This covers BOTH the 'initial' and 'loading' states
-    final isSplashRoute = state.matchedLocation == '/';
-    if (isSplashRoute) return null; // Always allow splash screen
-
     final isLoginRoute = state.matchedLocation == '/login';
-    final isOnboardingRoute = state.matchedLocation == '/onboarding';
+    final isSplashRoute = state.matchedLocation == '/';
 
-    // If still loading, don't redirect
-    if (isLoading) return null;
-
-    // If not authenticated and not on login/onboarding/home, redirect to login
-    final isHomeRoute = state.matchedLocation == '/home';
-    if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute && !isHomeRoute) {
-      return '/login';
-    }
+    // Always allow splash
+    if (isSplashRoute) return null;
 
     // If authenticated and on login page, go to home
     if (isAuthenticated && isLoginRoute) {
       return '/home';
     }
 
+    // Allow all other routes for everyone (guest mode)
     return null;
   },
   routes: [

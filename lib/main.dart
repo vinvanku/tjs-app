@@ -33,6 +33,30 @@ const AndroidNotificationChannel jobAlertsChannel = AndroidNotificationChannel(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // GLOBAL ERROR DISPLAY — shows errors visually instead of white screen
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: const Color(0xFF8B0000),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('\u26a0\ufe0f APP ERROR', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, decoration: TextDecoration.none)),
+                const SizedBox(height: 12),
+                SelectableText(details.exception.toString(), style: const TextStyle(color: Color(0xFFFFFF00), fontSize: 13, decoration: TextDecoration.none)),
+                const SizedBox(height: 16),
+                SelectableText(details.stack.toString(), style: const TextStyle(color: Colors.white70, fontSize: 9, decoration: TextDecoration.none)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
   // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

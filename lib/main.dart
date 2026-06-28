@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -105,6 +106,10 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Foreground message listener failed: $e');
   }
+
+  // CRITICAL: Disable runtime font fetching — use system fonts as fallback
+  // Without this, GoogleFonts tries to download Poppins at runtime and fails in release mode
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   runApp(const TSJobsApp());
 }

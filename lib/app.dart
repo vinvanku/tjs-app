@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/jobs_provider.dart';
+import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -21,23 +22,31 @@ import 'screens/profile_screen.dart';
 
 final GoRouter _router = GoRouter(
   initialLocation: '/',
-  debugLogDiagnostics: true,
+  debugLogDiagnostics: false,
   redirect: (BuildContext context, GoRouterState state) {
     final authProvider = context.read<AuthProvider>();
     final isAuthenticated = authProvider.isAuthenticated;
     final isLoading = authProvider.isLoading;
 
-    if (isLoading) return null;
+    // Don't redirect while auth state is still being determined
+    // This covers BOTH the 'initial' and 'loading' states
+    final isSplashRoute = state.matchedLocation == '/';
+    if (isSplashRoute) return null; // Always allow splash screen
 
     final isLoginRoute = state.matchedLocation == '/login';
     final isOnboardingRoute = state.matchedLocation == '/onboarding';
 
+    // If still loading, don't redirect
+    if (isLoading) return null;
+
+    // If not authenticated and not on login/onboarding, redirect to login
     if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute) {
       return '/login';
     }
 
+    // If authenticated and on login page, go to home
     if (isAuthenticated && isLoginRoute) {
-      return '/';
+      return '/home';
     }
 
     return null;
@@ -45,6 +54,11 @@ final GoRouter _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/home',
       name: 'home',
       builder: (context, state) => const HomeScreen(),
     ),

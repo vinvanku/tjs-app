@@ -195,9 +195,13 @@ class JobsProvider extends ChangeNotifier {
     int? daysLeft,
   }) async {
     final trimmed = query.trim();
-    if (_searchQuery == trimmed) return;
     _searchQuery = trimmed;
+    isSearching = true;
+    notifyListeners();
     await fetchJobs();
+    searchResults = List.from(_filteredJobs);
+    isSearching = false;
+    notifyListeners();
   }
 
   /// Applies local filtering on already-fetched jobs (for instant UI feedback).

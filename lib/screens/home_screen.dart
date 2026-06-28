@@ -14,10 +14,12 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
   int _currentNavIndex = 0;
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
+  bool _hasFetched = false;
 
   static const List<String> _categories = [
     'All',
@@ -33,7 +35,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final jobsProvider = context.read<JobsProvider>();
+      // Only fetch if we haven't already or the list is empty
+      if (_hasFetched && jobsProvider.jobs.isNotEmpty) return;
+      _hasFetched = true;
       context.read<JobsProvider>().fetchJobs();
     });
   }
@@ -44,13 +50,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  @override
+  bool get wantKeepAlive => true;
+
   Future<void> _onRefresh() async {
     await context.read<JobsProvider>().fetchJobs(refresh: true);
   }
 
   void _onCategorySelected(String category) {
     setState(() => _selectedCategory = category);
-    context.read<JobsProvider>().filterByCategory(category);
+    if (category == 'All') {
+      context.read<JobsProvider>().filterByCategory(null);
+    } else if (category == 'General Govt') {
+      context.read<JobsProvider>().filterByCategory('general');
+    } else {
+      context.read<JobsProvider>().filterByCategory(category.toLowerCase());
+    }
   }
 
   void _onNavTap(int index) {
@@ -74,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: _buildAppBar(),

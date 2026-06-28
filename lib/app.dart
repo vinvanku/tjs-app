@@ -39,8 +39,9 @@ final GoRouter _router = GoRouter(
     // If still loading, don't redirect
     if (isLoading) return null;
 
-    // If not authenticated and not on login/onboarding, redirect to login
-    if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute) {
+    // If not authenticated and not on login/onboarding/home, redirect to login
+    final isHomeRoute = state.matchedLocation == '/home';
+    if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute && !isHomeRoute) {
       return '/login';
     }
 

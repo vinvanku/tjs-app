@@ -471,6 +471,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 24),
+
+              // Browse as Guest
+              Center(
+                child: Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text(
+                        'Browse as Guest \u2192',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFE91E63),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'View jobs without signing in',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

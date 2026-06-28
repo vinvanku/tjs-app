@@ -403,4 +403,25 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  /// Whether the user has completed onboarding. Always true for now (skip onboarding).
+  bool get hasSeenOnboarding => true;
+
+  /// Check auth state — initializes auth and resolves current user.
+  Future<void> checkAuthState() async {
+    try {
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser != null) {
+        _user = currentUser;
+        _state = AuthState.authenticated;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('checkAuthState error: $e');
+    }
+    if (_state == AuthState.loading) {
+      _state = AuthState.unauthenticated;
+    }
+    notifyListeners();
+  }
 }

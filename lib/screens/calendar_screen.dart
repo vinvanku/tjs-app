@@ -473,20 +473,3 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
-
-// Calendar Event Model (referenced by JobsProvider)
-enum EventType { lastDate, exam, result }
-
-class CalendarEvent {
-  final String jobId;
-  final String title;
-  final EventType type;
-  final DateTime date;
-
-  CalendarEvent({
-    required this.jobId,
-    required this.title,
-    required this.type,
-    required this.date,
-  });
-}

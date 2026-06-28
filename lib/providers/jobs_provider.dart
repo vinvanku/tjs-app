@@ -108,7 +108,7 @@ class JobsProvider extends ChangeNotifier {
   /// Fetches jobs from the database with current filters applied.
   ///
   /// Sets [isLoading] to `true` during the operation.
-  Future<void> fetchJobs() async {
+  Future<void> fetchJobs({bool refresh = false}) async {
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -186,7 +186,14 @@ class JobsProvider extends ChangeNotifier {
   /// Searches jobs by [query] text. Pass empty string to clear search.
   ///
   /// Performs server-side search across title, organization, and description.
-  Future<void> searchJobs(String query) async {
+  Future<void> searchJobs({
+    String query = '',
+    List<String>? categories,
+    String? qualification,
+    String? district,
+    bool? freeOnly,
+    int? daysLeft,
+  }) async {
     final trimmed = query.trim();
     if (_searchQuery == trimmed) return;
     _searchQuery = trimmed;
@@ -206,9 +213,9 @@ class JobsProvider extends ChangeNotifier {
       _filteredJobs = _jobs.where((job) {
         return job.title.toLowerCase().contains(lowerQuery) ||
             job.organization.toLowerCase().contains(lowerQuery) ||
-            (job.description?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (job.category?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (job.district?.toLowerCase().contains(lowerQuery) ?? false);
+            job.description.toLowerCase().contains(lowerQuery) ||
+            job.category.toLowerCase().contains(lowerQuery) ||
+            job.district.toLowerCase().contains(lowerQuery);
       }).toList();
     }
 
@@ -315,6 +322,89 @@ class JobsProvider extends ChangeNotifier {
   void clearSelectedJob() {
     _selectedJob = null;
     notifyListeners();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADDITIONAL MEMBERS (stub implementations)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Featured jobs (those marked as featured).
+  List<Job> get featuredJobs => _jobs.where((j) => j.isFeatured).toList();
+
+  /// Whether a search is in progress.
+  bool isSearching = false;
+
+  /// Results from the last search.
+  List<Job> searchResults = [];
+
+  /// Calendar events derived from job dates.
+  Map<DateTime, List<CalendarEvent>> calendarEvents = {};
+
+  /// Whether job detail is loading.
+  bool isLoadingDetail = false;
+
+  /// List of downloaded PDF files.
+  List<DownloadedPdf> downloadedPdfs = [];
+
+  /// Toggles bookmark state for a job.
+  Future<void> toggleBookmark(String jobId) async {
+    final index = _jobs.indexWhere((j) => j.id == jobId);
+    if (index != -1) {
+      _jobs[index] = _jobs[index].copyWith(isBookmarked: !_jobs[index].isBookmarked);
+      notifyListeners();
+    }
+  }
+
+  /// Fetches saved jobs for the current user.
+  Future<void> fetchSavedJobs() async {
+    await loadSavedJobs();
+  }
+
+  /// Removes a saved job by ID.
+  Future<void> removeSavedJob(String jobId) async {
+    _savedJobs.removeWhere((j) => j.id == jobId);
+    _savedJobIds.remove(jobId);
+    notifyListeners();
+  }
+
+  /// Fetches detail for a single job.
+  Future<Job?> fetchJobDetail(String jobId) async {
+    isLoadingDetail = true;
+    notifyListeners();
+    await fetchJobById(jobId);
+    isLoadingDetail = false;
+    notifyListeners();
+    return _selectedJob;
+  }
+
+  /// Downloads a notification PDF.
+  Future<String?> downloadNotificationPdf(String jobId) async {
+    // Stub — real implementation would download the PDF
+    return null;
+  }
+
+  /// Fetches calendar events from job dates.
+  Future<void> fetchCalendarEvents() async {
+    final Map<DateTime, List<CalendarEvent>> events = {};
+    for (final job in _jobs) {
+      final normalizedDate = DateTime(job.lastDate.year, job.lastDate.month, job.lastDate.day);
+      events.putIfAbsent(normalizedDate, () => []).add(
+        CalendarEvent(jobId: job.id, title: job.title, type: EventType.lastDate, date: job.lastDate),
+      );
+      if (job.examDate != null) {
+        final examNorm = DateTime(job.examDate!.year, job.examDate!.month, job.examDate!.day);
+        events.putIfAbsent(examNorm, () => []).add(
+          CalendarEvent(jobId: job.id, title: job.title, type: EventType.exam, date: job.examDate!),
+        );
+      }
+    }
+    calendarEvents = events;
+    notifyListeners();
+  }
+
+  /// Opens a downloaded PDF file.
+  void openPdf(String path) {
+    // Stub — real implementation would open the file
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -57,6 +57,12 @@ dependencies:
   share_plus: ^10.1.0
   connectivity_plus: ^6.1.0
 
+  # OTP Input
+  pin_code_fields: ^8.0.1
+
+  # App Info
+  package_info_plus: ^8.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

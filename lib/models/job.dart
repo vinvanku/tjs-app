@@ -1,6 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Status of a job in the user's tracking pipeline.
+enum JobStatus { saved, applied, examSoon, shortlisted, rejected, resultOut }
+
+/// Represents a downloaded PDF file.
+class DownloadedPdf {
+  final String fileName;
+  final String filePath;
+  final String downloadDate;
+  const DownloadedPdf({required this.fileName, required this.filePath, required this.downloadDate});
+}
+
+/// Event type for calendar.
+enum EventType { lastDate, exam, result }
+
+/// Represents a calendar event derived from job dates.
+class CalendarEvent {
+  final String jobId;
+  final String title;
+  final EventType type;
+  final DateTime date;
+  CalendarEvent({required this.jobId, required this.title, required this.type, required this.date});
+}
+
 /// Represents a government job posting in Telangana.
 class Job {
   final String id;
@@ -24,6 +47,17 @@ class Job {
   final bool isActive;
   final bool isFeatured;
   final DateTime postedDate;
+  final String description;
+  final String district;
+  final bool isBookmarked;
+  final JobStatus? status;
+  final DateTime? applyStartDate;
+  final DateTime? resultDate;
+  final Map<String, dynamic>? vacancyBreakdown;
+  final String? ageLimit;
+  final Map<String, dynamic>? feeDetails;
+  final String? fee;
+  final List<String>? selectionProcess;
 
   const Job({
     required this.id,
@@ -47,6 +81,17 @@ class Job {
     required this.isActive,
     required this.isFeatured,
     required this.postedDate,
+    this.description = '',
+    this.district = 'All Telangana',
+    this.isBookmarked = false,
+    this.status,
+    this.applyStartDate,
+    this.resultDate,
+    this.vacancyBreakdown,
+    this.ageLimit,
+    this.feeDetails,
+    this.fee,
+    this.selectionProcess,
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -163,6 +208,25 @@ class Job {
       postedDate: json['posted_date'] != null
           ? DateTime.parse(json['posted_date'] as String)
           : DateTime.now(),
+      description: json['description'] as String? ?? '',
+      district: json['district'] as String? ?? 'All Telangana',
+      isBookmarked: json['is_bookmarked'] as bool? ?? false,
+      status: json['status'] != null
+          ? JobStatus.values.where((e) => e.name == json['status']).firstOrNull
+          : null,
+      applyStartDate: json['apply_start_date'] != null
+          ? DateTime.parse(json['apply_start_date'] as String)
+          : null,
+      resultDate: json['result_date'] != null
+          ? DateTime.parse(json['result_date'] as String)
+          : null,
+      vacancyBreakdown: json['vacancy_breakdown'] as Map<String, dynamic>?,
+      ageLimit: json['age_limit'] as String?,
+      feeDetails: json['fee_details'] as Map<String, dynamic>?,
+      fee: json['fee'] as String?,
+      selectionProcess: json['selection_process'] != null
+          ? List<String>.from(json['selection_process'] as List)
+          : null,
     );
   }
 
@@ -190,6 +254,17 @@ class Job {
       'is_active': isActive,
       'is_featured': isFeatured,
       'posted_date': postedDate.toIso8601String(),
+      'description': description,
+      'district': district,
+      'is_bookmarked': isBookmarked,
+      'status': status?.name,
+      'apply_start_date': applyStartDate?.toIso8601String(),
+      'result_date': resultDate?.toIso8601String(),
+      'vacancy_breakdown': vacancyBreakdown,
+      'age_limit': ageLimit,
+      'fee_details': feeDetails,
+      'fee': fee,
+      'selection_process': selectionProcess,
     };
   }
 
@@ -216,6 +291,17 @@ class Job {
     bool? isActive,
     bool? isFeatured,
     DateTime? postedDate,
+    String? description,
+    String? district,
+    bool? isBookmarked,
+    JobStatus? status,
+    DateTime? applyStartDate,
+    DateTime? resultDate,
+    Map<String, dynamic>? vacancyBreakdown,
+    String? ageLimit,
+    Map<String, dynamic>? feeDetails,
+    String? fee,
+    List<String>? selectionProcess,
   }) {
     return Job(
       id: id ?? this.id,
@@ -239,6 +325,17 @@ class Job {
       isActive: isActive ?? this.isActive,
       isFeatured: isFeatured ?? this.isFeatured,
       postedDate: postedDate ?? this.postedDate,
+      description: description ?? this.description,
+      district: district ?? this.district,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      status: status ?? this.status,
+      applyStartDate: applyStartDate ?? this.applyStartDate,
+      resultDate: resultDate ?? this.resultDate,
+      vacancyBreakdown: vacancyBreakdown ?? this.vacancyBreakdown,
+      ageLimit: ageLimit ?? this.ageLimit,
+      feeDetails: feeDetails ?? this.feeDetails,
+      fee: fee ?? this.fee,
+      selectionProcess: selectionProcess ?? this.selectionProcess,
     );
   }
 

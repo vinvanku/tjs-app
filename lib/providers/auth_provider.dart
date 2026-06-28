@@ -55,7 +55,7 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   /// The phone number used for OTP authentication.
-  String? get phoneNumber => _phoneNumber;
+  String get phoneNumber => _phoneNumber ?? '';
 
   /// The currently authenticated Supabase user.
   User? get user => _user;
@@ -212,11 +212,24 @@ class AuthProvider extends ChangeNotifier {
   // PROFILE MANAGEMENT
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Updates the user's profile with the given [profile] data.
-  Future<void> updateProfile(Profile profile) async {
+  /// Updates the user's profile with the given [profile] data or named fields.
+  Future<void> updateProfile({
+    Profile? profile,
+    String? name,
+    String? district,
+    String? qualification,
+  }) async {
     try {
-      await _supabaseService.updateProfile(profile);
-      _profile = profile;
+      final Profile p;
+      if (profile != null) {
+        p = profile;
+      } else if (_profile != null) {
+        p = _profile!.copyWith(name: name, district: district, qualification: qualification);
+      } else {
+        return;
+      }
+      await _supabaseService.updateProfile(p);
+      _profile = p;
       notifyListeners();
     } on SupabaseServiceException catch (e) {
       _errorMessage = e.message;
@@ -265,6 +278,115 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (_) {
       // Non-critical: don't fail auth if notifications setup fails
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADDITIONAL MEMBERS (stub implementations for screens)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// User's display name.
+  String get userName => _profile?.name ?? 'User';
+
+  /// User's district preference.
+  String get userDistrict => _profile?.district ?? 'All Telangana';
+
+  /// User's qualification preference.
+  String get userQualification => _profile?.qualification ?? 'Degree';
+
+  /// Notification preference: new jobs.
+  bool notifNewJobs = true;
+
+  /// Notification preference: last date reminders.
+  bool notifLastDate = true;
+
+  /// Notification preference: results.
+  bool notifResults = true;
+
+  /// Whether language is Telugu.
+  bool get isTeluguLanguage => _profile?.language == 'te';
+
+  /// Whether the profile is complete.
+  bool get isProfileComplete => _profile?.isComplete ?? false;
+
+  /// User's phone number (non-nullable for UI).
+  String get phoneNumberDisplay => _phoneNumber ?? '';
+
+  /// Sends OTP with named parameter (used by login_screen).
+  Future<String?> sendOTP({required String phoneNumber}) async {
+    await sendOtp(phoneNumber);
+    return 'verification_id';
+  }
+
+  /// Verifies OTP with named parameters (used by login_screen).
+  Future<bool> verifyOTP({required String verificationId, required String otp}) async {
+    await verifyOtp(otp);
+    return _state == AuthState.authenticated;
+  }
+
+  /// Marks onboarding as seen.
+  Future<void> setOnboardingSeen() async {
+    // Stub — could store in shared preferences
+  }
+
+  /// Saves initial profile during setup.
+  Future<void> saveProfile({
+    required String name,
+    required String district,
+    required String qualification,
+    required List<String> categories,
+  }) async {
+    if (_user == null) return;
+    final profile = Profile(
+      id: _user!.id,
+      phone: _phoneNumber ?? '',
+      name: name,
+      district: district,
+      qualification: qualification,
+      preferredCategories: categories,
+    );
+    await _supabaseService.updateProfile(profile);
+    _profile = profile;
+    notifyListeners();
+  }
+
+  /// Updates profile with named parameters (used by profile_screen).
+  Future<void> updateProfileFields({
+    String? name,
+    String? district,
+    String? qualification,
+  }) async {
+    if (_profile == null) return;
+    final updated = _profile!.copyWith(
+      name: name,
+      district: district,
+      qualification: qualification,
+    );
+    await updateProfile(profile: updated);
+  }
+
+  /// Updates a notification preference.
+  Future<void> updateNotificationPreference(String key, bool value) async {
+    switch (key) {
+      case 'new_jobs':
+        notifNewJobs = value;
+        break;
+      case 'last_date':
+        notifLastDate = value;
+        break;
+      case 'results':
+        notifResults = value;
+        break;
+    }
+    notifyListeners();
+  }
+
+  /// Sets the app language.
+  Future<void> setLanguage(String lang) async {
+    if (_profile != null) {
+      _profile = _profile!.copyWith(language: lang);
+      await _supabaseService.updateProfile(_profile!);
+      notifyListeners();
     }
   }
 

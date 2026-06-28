@@ -504,11 +504,14 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
 
   Widget _buildDateRow(
     String label,
-    String date,
+    dynamic date,
     Color color,
     IconData icon, {
     String? countdown,
   }) {
+    final dateStr = date is DateTime
+        ? '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}'
+        : date?.toString() ?? 'TBA';
     return Row(
       children: [
         Icon(icon, size: 20, color: color),
@@ -526,7 +529,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                date,
+                dateStr,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -585,5 +588,10 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         ),
       ],
     );
+  }
+
+  String _monthName(int month) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[month - 1];
   }
 }

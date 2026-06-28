@@ -84,11 +84,68 @@ def extract_vacancies(text):
     return 0
 
 
+def is_valid_job_posting(title):
+    """Filter out non-job content (prep tips, results, news)."""
+    if not title or len(title) <= 20:
+        return False
+    t = title.lower()
+    # Exclude patterns
+    exclude = [
+        'how to prepare', 'study material', 'tips for', 'strategy',
+        'syllabus explained', 'preparation plan', 'cut off marks',
+        'final key', 'answer key released', 'answer key',
+        'results declared', 'government to fill', 'cm announced',
+        'latest news', 'press release', 'upcoming vacancies',
+        'పరీక్ష టిప్స్', 'తయారీ ప్రణాళిక', 'సిలబస్ వివరాలు', 'ఆన్సర్ కీ',
+    ]
+    if any(ex in t for ex in exclude):
+        return False
+    # Must contain at least one job keyword
+    job_kws = [
+        'recruitment', 'notification', 'vacancy', 'vacancies', 'posts',
+        'apply', 'online form', 'walk-in', 'walk in', 'bharti', 'jobs',
+        'నియామకం', 'నోటిఫికేషన్', 'ఖాళీలు', 'పోస్టులు', 'దరఖాస్తు',
+    ]
+    return any(kw in t for kw in job_kws)
+
+
+def scrape_freejobalert_details(detail_url):
+    """Fetch a FreeJobAlert detail page and extract apply/pdf links from Important Links table."""
+    result = {'apply_url': None, 'pdf_url': None}
+    html = fetch(detail_url, retries=2, timeout=20)
+    if not html:
+        return result
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        for table in soup.find_all('table'):
+            table_text = table.get_text().lower()
+            if 'apply online' in table_text or 'important link' in table_text \
+               or 'application portal' in table_text or 'official notification' in table_text:
+                for row in table.find_all('tr'):
+                    cells = row.find_all('td')
+                    if len(cells) < 2:
+                        continue
+                    label = cells[0].get_text(strip=True).lower()
+                    link = cells[-1].find('a', href=True)
+                    if not link:
+                        continue
+                    href = link['href']
+                    if any(kw in label for kw in ['apply online', 'apply here', 'application portal', 'application form']):
+                        result['apply_url'] = href
+                    elif ('notification' in label or 'official notification' in label) and '.pdf' in href.lower():
+                        result['pdf_url'] = href
+                if result['apply_url'] or result['pdf_url']:
+                    break
+    except Exception:
+        pass
+    return result
+
+
 # ═══════════════════════════════════════════════════════════════════
 # 1. FREEJOBALERT — Structured table (BEST quality)
 # ═══════════════════════════════════════════════════════════════════
 
-def scrape_freejobalert():
+def scrape_freejobalert(skip_details=False):
     """Scrape FreeJobAlert Telangana — table.lattbl with 7 columns."""
     print("\n📰 1. FreeJobAlert")
     jobs = []
@@ -117,15 +174,31 @@ def scrape_freejobalert():
         last_date = cols[5].get_text(strip=True)
         link = cols[6].find('a')
         
+        title = f"{board} – {post_name}"
+        if not is_valid_job_posting(title):
+            continue
+        
+        detail_url = link['href'] if link else None
+        apply_url = None
+        pdf_url = None
+        
+        if detail_url and not skip_details:
+            details = scrape_freejobalert_details(detail_url)
+            apply_url = details['apply_url']
+            pdf_url = details['pdf_url']
+            time.sleep(0.4)
+        
         jobs.append({
-            'title': f"{board} – {post_name}",
+            'title': title,
             'organization': board,
             'category': detect_category(post_name),
             'qualification': qualification[:150] if qualification else None,
             'advt_no': advt_no if advt_no != '–' else None,
             'last_date': parse_date(last_date),
             'posted_date': parse_date(post_date),
-            'apply_url': link['href'] if link else None,
+            'source_url': detail_url,
+            'apply_url': apply_url,
+            'pdf_url': pdf_url,
             'source': 'freejobalert',
             'vacancies': extract_vacancies(post_name),
             'districts': ['All Telangana'],
@@ -165,6 +238,9 @@ def scrape_tgpsc():
             continue
         seen.add(dedup)
         
+        if not is_valid_job_posting(text):
+            continue
+        
         href = link['href']
         pdf_url = None
         if href.lower().endswith('.pdf'):
@@ -178,7 +254,7 @@ def scrape_tgpsc():
             'advt_no': None,
             'last_date': None,
             'posted_date': None,
-            'apply_url': 'https://www.tgpsc.gov.in',
+            'apply_url': 'https://tgpsc.gov.in',
             'pdf_url': pdf_url,
             'source': 'tgpsc',
             'vacancies': extract_vacancies(text),
@@ -237,6 +313,9 @@ def scrape_sarkariresult():
             continue
         seen.add(dedup)
         
+        if not is_valid_job_posting(text):
+            continue
+        
         full_url = href if href.startswith('http') else f"https://www.sarkariresult.com{href}"
         
         jobs.append({
@@ -290,6 +369,9 @@ def scrape_eenadu():
             continue
         seen.add(dedup)
         
+        if not is_valid_job_posting(text):
+            continue
+        
         href = link['href']
         full_url = href if href.startswith('http') else f"https://pratibha.eenadu.net{href}"
         
@@ -342,6 +424,9 @@ def scrape_sakshi():
         if dedup in seen:
             continue
         seen.add(dedup)
+        
+        if not is_valid_job_posting(text):
+            continue
         
         href = link['href']
         full_url = href if href.startswith('http') else f"https://education.sakshi.com{href}"

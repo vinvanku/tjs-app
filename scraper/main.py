@@ -90,6 +90,15 @@ def upsert_jobs(client: Client, jobs: list[dict]) -> dict:
     
     for job in jobs:
         try:
+            # Determine best source_url: apply_url > pdf_url > source_url fallback
+            best_url = job.get('apply_url') or job.get('pdf_url') or job.get('source_url')
+            
+            # Build description with PDF link if it's separate from source_url
+            description = None
+            pdf = job.get('pdf_url')
+            if pdf and pdf != best_url:
+                description = f"[📄 Notification PDF]({pdf})"
+            
             # Map our scraper fields to Supabase schema
             record = {
                 'title': job.get('title', '')[:200],
@@ -98,12 +107,14 @@ def upsert_jobs(client: Client, jobs: list[dict]) -> dict:
                 'vacancies': job.get('vacancies', 0) or 0,
                 'last_date': job.get('last_date'),
                 'qualification': job.get('qualification', '')[:200] if job.get('qualification') else None,
-                'source_url': job.get('apply_url') or job.get('pdf_url'),
+                'source_url': best_url,
                 'source': job.get('source', 'manual'),
                 'district': (job.get('districts', ['All Telangana']) or ['All Telangana'])[0] if isinstance(job.get('districts'), list) else job.get('districts', 'All Telangana'),
                 'is_active': True,
                 'updated_at': datetime.now().isoformat(),
             }
+            if description:
+                record['description'] = description
             
             # Remove None values
             record = {k: v for k, v in record.items() if v is not None}
@@ -153,7 +164,7 @@ def mark_expired_jobs(client: Client) -> int:
 # Main Orchestrator
 # ─────────────────────────────────────────────────────────
 
-def run(dry_run: bool = False, single_source: str = None):
+def run(dry_run: bool = False, single_source: str = None, skip_details: bool = False):
     """
     Main scraping pipeline:
     1. Scrape all sources (or single source)
@@ -167,11 +178,13 @@ def run(dry_run: bool = False, single_source: str = None):
     print(f"   Mode: {'DRY RUN (no DB writes)' if dry_run else 'LIVE (writing to Supabase)'}")
     if single_source:
         print(f"   Source: {single_source} only")
+    if skip_details:
+        print(f"   ⚡ Skip details: ON (no detail page fetching)")
     print("═" * 65)
     
     # ─── Step 1: Scrape ───
     all_scrapers = {
-        'freejobalert': scrape_freejobalert,
+        'freejobalert': lambda: scrape_freejobalert(skip_details=skip_details),
         'tgpsc': scrape_tgpsc,
         'sarkariresult': scrape_sarkariresult,
         'eenadu': scrape_eenadu,
@@ -247,8 +260,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TJS App Scraper')
     parser.add_argument('--dry-run', action='store_true',
                         help='Scrape without writing to database')
+    parser.add_argument('--skip-details', action='store_true',
+                        help='Skip fetching detail pages (faster, no apply URLs)')
     parser.add_argument('--source', type=str, default=None,
                         help='Scrape single source (freejobalert/tgpsc/sarkariresult/eenadu/sakshi)')
     args = parser.parse_args()
     
-    run(dry_run=args.dry_run, single_source=args.source)
+    run(dry_run=args.dry_run, single_source=args.source, skip_details=args.skip_details)

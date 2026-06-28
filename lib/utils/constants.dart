@@ -12,7 +12,7 @@ class AppConstants {
   static const String supabaseUrl = 'https://bkjkcdsvezviuytdwlzg.supabase.co';
 
   /// Supabase anonymous key.
-  static const String supabaseAnonKey = '[REDACTED_JWT]';
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJramtjZHN2ZXp2aXV5dGR3bHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NjQwNTYsImV4cCI6MjA5ODA0MDA1Nn0.8mgwcW1y-uNQut-4jx5U7i21e06u9xxRTARXe1FS9eQ';
 
   // ─────────────────────────────────────────────────────────────────────────
   // COLOR SCHEME

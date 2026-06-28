@@ -86,15 +86,26 @@ class _FilterSheetState extends State<FilterSheet> {
   late bool _freeOnly;
   late int? _daysLeftMax;
 
-  // Available options
-  static const List<String> _categories = [
-    'Police',
-    'Teaching',
-    'Health',
-    'Engineering',
-    'Revenue',
-    'General',
-  ];
+  // Available options — values match DB exactly (lowercase, underscores)
+  static const Map<String, String> _categoryLabels = {
+    'police': 'Police',
+    'teaching': 'Teaching',
+    'health': 'Health',
+    'engineering': 'Engineering',
+    'revenue': 'Revenue',
+    'banking': 'Banking',
+    'railway': 'Railway',
+    'defense': 'Defense',
+    'research': 'Research',
+    'agriculture': 'Agriculture',
+    'forest': 'Forest',
+    'judicial': 'Judicial',
+    'postal': 'Postal',
+    'insurance': 'Insurance',
+    'staff_selection': 'Staff Selection',
+    'education': 'Education',
+    'general': 'General',
+  };
 
   static const List<String> _qualifications = [
     '10th Pass',
@@ -261,17 +272,17 @@ class _FilterSheetState extends State<FilterSheet> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _categories.map((cat) {
-                        final isSelected = _selectedCategories.contains(cat);
+                      children: _categoryLabels.entries.map((entry) {
+                        final isSelected = _selectedCategories.contains(entry.key);
                         return CategoryChip(
-                          label: cat,
+                          label: entry.value,
                           isSelected: isSelected,
                           onTap: () {
                             setState(() {
                               if (isSelected) {
-                                _selectedCategories.remove(cat);
+                                _selectedCategories.remove(entry.key);
                               } else {
-                                _selectedCategories.add(cat);
+                                _selectedCategories.add(entry.key);
                               }
                             });
                           },

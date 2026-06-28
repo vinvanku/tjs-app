@@ -24,13 +24,23 @@ class _SearchScreenState extends State<SearchScreen> {
   int _daysLeftFilter = 0; // 0 = Any, 7 = <7, 30 = <30
 
   static const List<String> _categories = [
-    'General Govt',
+    'General',
     'Police',
     'Teaching',
     'Health',
     'Engineering',
     'Revenue',
     'Banking',
+    'Railway',
+    'Defense',
+    'Research',
+    'Agriculture',
+    'Forest',
+    'Judicial',
+    'Postal',
+    'Insurance',
+    'Staff Selection',
+    'Education',
   ];
 
   static const List<String> _qualifications = [

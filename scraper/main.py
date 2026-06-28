@@ -92,12 +92,15 @@ def upsert_jobs(client: Client, jobs: list) -> dict:
                 'qualification': (job.get('qualification', '')[:200]
                                   if job.get('qualification') else None),
                 'source_url': best_url,
+                'apply_url': job.get('apply_url') or best_url,
+                'pdf_url': pdf,
                 'source': job.get('source', 'manual'),
                 'district': (job.get('districts', ['All Telangana']) or ['All Telangana'])[0]
                             if isinstance(job.get('districts'), list)
                             else job.get('districts', 'All Telangana'),
                 'is_active': True,
                 'updated_at': datetime.now().isoformat(),
+                'posted_date': job.get('posted_date'),
             }
             if description:
                 record['description'] = description

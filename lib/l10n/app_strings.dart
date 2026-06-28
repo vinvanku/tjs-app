@@ -111,6 +111,46 @@ class AppStrings {
       'en': 'General Govt',
       'te': 'జనరల్ గవర్నమెంట్',
     },
+    'cat_general': {
+      'en': 'General',
+      'te': 'జనరల్',
+    },
+    'cat_defense': {
+      'en': 'Defense',
+      'te': 'రక్షణ',
+    },
+    'cat_research': {
+      'en': 'Research',
+      'te': 'పరిశోధన',
+    },
+    'cat_agriculture': {
+      'en': 'Agriculture',
+      'te': 'వ్యవసాయం',
+    },
+    'cat_forest': {
+      'en': 'Forest',
+      'te': 'అటవీ',
+    },
+    'cat_judicial': {
+      'en': 'Judicial',
+      'te': 'న్యాయ',
+    },
+    'cat_postal': {
+      'en': 'Postal',
+      'te': 'పోస్టల్',
+    },
+    'cat_insurance': {
+      'en': 'Insurance',
+      'te': 'బీమా',
+    },
+    'cat_staff_selection': {
+      'en': 'Staff Selection',
+      'te': 'స్టాఫ్ సెలెక్షన్',
+    },
+    'cat_education': {
+      'en': 'Education',
+      'te': 'విద్య',
+    },
 
     // Home Screen
     'latest_jobs': {

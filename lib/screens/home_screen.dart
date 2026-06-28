@@ -30,7 +30,17 @@ class _HomeScreenState extends State<HomeScreen>
     'Engineering',
     'Revenue',
     'Banking',
-    'General Govt',
+    'Railway',
+    'Defense',
+    'Research',
+    'Agriculture',
+    'Forest',
+    'Judicial',
+    'Postal',
+    'Insurance',
+    'Staff Selection',
+    'Education',
+    'General',
   ];
 
   @override
@@ -62,10 +72,30 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _selectedCategory = category);
     if (category == 'All') {
       context.read<JobsProvider>().filterByCategory(null);
-    } else if (category == 'General Govt') {
-      context.read<JobsProvider>().filterByCategory('general');
     } else {
-      context.read<JobsProvider>().filterByCategory(category.toLowerCase());
+      // Map display names to exact DB values (all lowercase, underscores)
+      const displayToDb = {
+        'Police': 'police',
+        'Teaching': 'teaching',
+        'Health': 'health',
+        'Engineering': 'engineering',
+        'Revenue': 'revenue',
+        'Banking': 'banking',
+        'Railway': 'railway',
+        'Defense': 'defense',
+        'Research': 'research',
+        'Agriculture': 'agriculture',
+        'Forest': 'forest',
+        'Judicial': 'judicial',
+        'Postal': 'postal',
+        'Insurance': 'insurance',
+        'Staff Selection': 'staff_selection',
+        'Education': 'education',
+        'General': 'general',
+      };
+      context.read<JobsProvider>().filterByCategory(
+        displayToDb[category] ?? category.toLowerCase(),
+      );
     }
   }
 
@@ -283,7 +313,17 @@ class _HomeScreenState extends State<HomeScreen>
         'Engineering': 'cat_engineering',
         'Revenue': 'cat_revenue',
         'Banking': 'cat_banking',
-        'General Govt': 'cat_general_govt',
+        'Railway': 'cat_railway',
+        'Defense': 'cat_defense',
+        'Research': 'cat_research',
+        'Agriculture': 'cat_agriculture',
+        'Forest': 'cat_forest',
+        'Judicial': 'cat_judicial',
+        'Postal': 'cat_postal',
+        'Insurance': 'cat_insurance',
+        'Staff Selection': 'cat_staff_selection',
+        'Education': 'cat_education',
+        'General': 'cat_general',
       };
       return lang.getString(keyMap[category] ?? category);
     }

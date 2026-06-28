@@ -48,17 +48,21 @@ Future<void> main() async {
   );
 
   // Initialize Firebase (don't block if it fails)
+  bool firebaseReady = false;
   try {
     await Firebase.initializeApp();
+    firebaseReady = true;
   } catch (e) {
     debugPrint('Firebase init failed: $e');
   }
 
-  // Set up background message handler
-  try {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    debugPrint('FCM background handler setup failed: $e');
+  // Only set up Firebase-dependent features if Firebase initialized
+  if (firebaseReady) {
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      debugPrint('FCM background handler setup failed: $e');
+    }
   }
 
   // Initialize Supabase (don't block if it fails)
@@ -89,22 +93,26 @@ Future<void> main() async {
   }
 
   // Request notification permissions (iOS & Android 13+)
-  try {
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-  } catch (e) {
-    debugPrint('Permission request failed: $e');
+  if (firebaseReady) {
+    try {
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+    } catch (e) {
+      debugPrint('Permission request failed: $e');
+    }
   }
 
   // Listen for foreground messages
-  try {
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-  } catch (e) {
-    debugPrint('Foreground message listener failed: $e');
+  if (firebaseReady) {
+    try {
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    } catch (e) {
+      debugPrint('Foreground message listener failed: $e');
+    }
   }
 
   // CRITICAL: Disable runtime font fetching — use system fonts as fallback

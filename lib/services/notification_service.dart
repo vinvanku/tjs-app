@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-import 'supabase_service.dart';
 
 /// Top-level function to handle background messages.
 /// Must be a top-level function (not a class method).
@@ -26,9 +25,17 @@ class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FirebaseMessaging? _messaging = _getMessagingInstance();
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+
+  static FirebaseMessaging? _getMessagingInstance() {
+    try {
+      return FirebaseMessaging.instance;
+    } catch (e) {
+      return null;
+    }
+  }
 
   /// Callback triggered when the FCM token is refreshed.
   /// Set this from outside to handle token updates (e.g., save to Supabase).
@@ -51,6 +58,11 @@ class NotificationService {
   /// 5. Registers token refresh listener
   Future<void> initialize() async {
     if (_isInitialized) return;
+    if (_messaging == null) {
+      debugPrint('NotificationService: Firebase not available, skipping FCM setup');
+      _isInitialized = true;
+      return;
+    }
 
     // Request permissions
     await _requestPermissions();
@@ -65,7 +77,7 @@ class NotificationService {
     await _getAndStoreToken();
 
     // Listen for token refresh
-    _messaging.onTokenRefresh.listen((newToken) {
+    _messaging!.onTokenRefresh.listen((newToken) {
       onTokenRefresh?.call(newToken);
     });
 
@@ -78,7 +90,7 @@ class NotificationService {
 
   /// Requests notification permissions from the user.
   Future<NotificationSettings> _requestPermissions() async {
-    final settings = await _messaging.requestPermission(
+    final settings = await _messaging!.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -152,7 +164,7 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
     // Handle the case where the app was terminated and opened via notification
-    final initialMessage = await _messaging.getInitialMessage();
+    final initialMessage = await _messaging!.getInitialMessage();
     if (initialMessage != null) {
       _handleMessageOpenedApp(initialMessage);
     }
@@ -161,7 +173,7 @@ class NotificationService {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     // Set foreground notification presentation options (iOS)
-    await _messaging.setForegroundNotificationPresentationOptions(
+    await _messaging!.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -192,7 +204,7 @@ class NotificationService {
   /// Retrieves the current FCM token.
   Future<String?> getToken() async {
     try {
-      return await _messaging.getToken();
+      return await _messaging?.getToken();
     } catch (e) {
       return null;
     }
@@ -255,12 +267,12 @@ class NotificationService {
 
   /// Subscribes to a notification topic (e.g., job category).
   Future<void> subscribeToTopic(String topic) async {
-    await _messaging.subscribeToTopic(topic);
+    await _messaging?.subscribeToTopic(topic);
   }
 
   /// Unsubscribes from a notification topic.
   Future<void> unsubscribeFromTopic(String topic) async {
-    await _messaging.unsubscribeFromTopic(topic);
+    await _messaging?.unsubscribeFromTopic(topic);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -269,6 +281,6 @@ class NotificationService {
 
   /// Deletes the FCM token (useful on logout).
   Future<void> deleteToken() async {
-    await _messaging.deleteToken();
+    await _messaging?.deleteToken();
   }
 }

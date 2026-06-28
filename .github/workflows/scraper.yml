@@ -1,4 +1,4 @@
-name: TJS Scraper - Daily Job Sync
+name: TJS Scraper v2 - Daily Job Sync (18 Sources)
 
 on:
   schedule:
@@ -6,11 +6,38 @@ on:
     - cron: '30 0 * * *'
     - cron: '30 12 * * *'
   workflow_dispatch:  # Allow manual trigger from GitHub UI
+    inputs:
+      skip_enrichment:
+        description: 'Skip Google URL enrichment (faster)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      single_source:
+        description: 'Run single source only (leave empty for all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Dry run (no Supabase writes)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+  SCRAPERAPI_KEY: ${{ secrets.SCRAPERAPI_KEY }}
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15  # Increased for 18 sources + enrichment
 
     steps:
       - name: Checkout code
@@ -24,16 +51,60 @@ jobs:
           cache-dependency-path: scraper/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r scraper/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scraper/requirements.txt
 
       - name: Run scraper
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scraper/main.py
-
-      - name: Report failure
-        if: failure()
         run: |
-          echo "::error::TJS Scraper failed! Check logs above."
-          echo "Last run: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          cd scraper
+          ARGS=""
+          
+          # Handle workflow_dispatch inputs
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          
+          if [ "${{ github.event.inputs.skip_enrichment }}" = "true" ]; then
+            ARGS="$ARGS --skip-enrichment"
+          fi
+          
+          if [ -n "${{ github.event.inputs.single_source }}" ]; then
+            ARGS="$ARGS --source ${{ github.event.inputs.single_source }}"
+          fi
+          
+          # For scheduled runs: skip enrichment to save time & avoid rate limits
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ARGS="$ARGS --skip-enrichment"
+          fi
+          
+          echo "Running: python main.py $ARGS"
+          python main.py $ARGS
+
+      - name: Upload output on dry-run
+        if: github.event.inputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-output-${{ github.run_number }}
+          path: scraper/output/
+          retention-days: 7
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-logs-${{ github.run_number }}
+          path: scraper/*.log
+          retention-days: 7
+
+      - name: Report summary
+        if: always()
+        run: |
+          echo "## TJS Scraper Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f scraper/output/*.json ]; then
+            JOBS=$(python -c "import json; print(len(json.load(open(list(__import__('glob').glob('scraper/output/*.json'))[0]))))" 2>/dev/null || echo "N/A")
+            echo "- **Jobs processed**: $JOBS" >> $GITHUB_STEP_SUMMARY
+          fi

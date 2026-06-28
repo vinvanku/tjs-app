@@ -5,6 +5,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -119,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -127,6 +129,41 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Language Toggle - top right
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Consumer<LanguageProvider>(
+                    builder: (context, langProvider, _) {
+                      return GestureDetector(
+                        onTap: () => langProvider.toggleLanguage(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE91E63).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFE91E63).withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            langProvider.isEnglish ? 'EN | తె' : 'తె | EN',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFE91E63),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
               const SizedBox(height: 60),
 
               // Header
@@ -162,10 +199,10 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 40),
 
               // Title
-              const Center(
+              Center(
                 child: Text(
-                  'Login to TS Jobs',
-                  style: TextStyle(
+                  lang.getString('login_title'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF1A1A2E),
@@ -177,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text(
                   _otpSent
                       ? 'Enter the 6-digit OTP sent to\n+91 ${_phoneController.text}'
-                      : 'Enter your mobile number to continue',
+                      : lang.getString('enter_mobile'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -190,9 +227,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Phone Input Section
               if (!_otpSent) ...[
-                const Text(
-                  'Mobile Number',
-                  style: TextStyle(
+                Text(
+                  lang.getString('mobile_number'),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1A1A2E),
@@ -313,9 +350,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text(
-                            'Send OTP',
-                            style: TextStyle(
+                        : Text(
+                            lang.getString('send_otp'),
+                            style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
@@ -462,13 +499,39 @@ class _LoginScreenState extends State<LoginScreen> {
               // Terms
               Center(
                 child: Text(
-                  'By continuing, you agree to our\nTerms of Service & Privacy Policy',
+                  lang.getString('terms_text'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade500,
                     height: 1.5,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Browse as Guest
+              Center(
+                child: Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => context.go('/home'),
+                      child: Text(
+                        '${lang.getString('browse_as_guest')} →',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFE91E63),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      lang.getString('view_jobs_without_signin'),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ),
             ],

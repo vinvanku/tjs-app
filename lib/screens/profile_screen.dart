@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/jobs_provider.dart';
+import '../providers/language_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -87,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadUserData() {
     final authProvider = context.read<AuthProvider>();
+    final langProvider = context.read<LanguageProvider>();
     _nameController.text = authProvider.userName;
     _selectedDistrict = authProvider.userDistrict;
     _selectedQualification = authProvider.userQualification;
@@ -94,6 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _lastDateReminders = authProvider.notifLastDate;
     _resultAlerts = authProvider.notifResults;
     _isTeluguLanguage = authProvider.isTeluguLanguage;
+    _isTeluguLanguage = langProvider.isTelugu;
   }
 
   Future<void> _loadAppVersion() async {
@@ -163,6 +166,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _toggleLanguage(bool isTeluguSelected) async {
     setState(() => _isTeluguLanguage = isTeluguSelected);
+    // Sync with LanguageProvider for app-wide translation
+    context.read<LanguageProvider>().setLanguage(isTeluguSelected ? 'te' : 'en');
     final authProvider = context.read<AuthProvider>();
     await authProvider.setLanguage(isTeluguSelected ? 'te' : 'en');
   }

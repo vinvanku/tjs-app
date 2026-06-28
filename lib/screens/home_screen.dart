@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/jobs_provider.dart';
+import '../providers/language_provider.dart';
 import '../models/job_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,10 +15,12 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
   int _currentNavIndex = 0;
   String _selectedCategory = 'All';
   final ScrollController _scrollController = ScrollController();
+  bool _hasFetched = false;
 
   static const List<String> _categories = [
     'All',
@@ -33,7 +36,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final jobsProvider = context.read<JobsProvider>();
+      // Only fetch if we haven't already or the list is empty
+      if (_hasFetched && jobsProvider.jobs.isNotEmpty) return;
+      _hasFetched = true;
       context.read<JobsProvider>().fetchJobs();
     });
   }
@@ -44,13 +51,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  @override
+  bool get wantKeepAlive => true;
+
   Future<void> _onRefresh() async {
     await context.read<JobsProvider>().fetchJobs(refresh: true);
   }
 
   void _onCategorySelected(String category) {
     setState(() => _selectedCategory = category);
-    context.read<JobsProvider>().filterByCategory(category);
+    if (category == 'All') {
+      context.read<JobsProvider>().filterByCategory(null);
+    } else if (category == 'General Govt') {
+      context.read<JobsProvider>().filterByCategory('general');
+    } else {
+      context.read<JobsProvider>().filterByCategory(category.toLowerCase());
+    }
   }
 
   void _onNavTap(int index) {
@@ -74,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: _buildAppBar(),
@@ -107,9 +124,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Latest Jobs',
-                          style: TextStyle(
+                        Text(
+                          context.watch<LanguageProvider>().getString('latest_jobs'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1A1A2E),
@@ -255,6 +272,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryChips() {
+    final lang = context.watch<LanguageProvider>();
+    // Map internal category names to translation keys
+    String categoryLabel(String category) {
+      const keyMap = {
+        'All': 'cat_all',
+        'Police': 'cat_police',
+        'Teaching': 'cat_teaching',
+        'Health': 'cat_health',
+        'Engineering': 'cat_engineering',
+        'Revenue': 'cat_revenue',
+        'Banking': 'cat_banking',
+        'General Govt': 'cat_general_govt',
+      };
+      return lang.getString(keyMap[category] ?? category);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: SingleChildScrollView(
@@ -295,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : null,
                   ),
                   child: Text(
-                    category,
+                    categoryLabel(category),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight:
@@ -615,6 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNav() {
+    final lang = context.watch<LanguageProvider>();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -632,11 +666,11 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.search_rounded, 'Search'),
-              _buildNavItem(2, Icons.bookmark_rounded, 'Saved'),
-              _buildNavItem(3, Icons.calendar_month_rounded, 'Calendar'),
-              _buildNavItem(4, Icons.person_rounded, 'Me'),
+              _buildNavItem(0, Icons.home_rounded, lang.getString('nav_home')),
+              _buildNavItem(1, Icons.search_rounded, lang.getString('nav_search')),
+              _buildNavItem(2, Icons.bookmark_rounded, lang.getString('nav_saved')),
+              _buildNavItem(3, Icons.calendar_month_rounded, lang.getString('nav_calendar')),
+              _buildNavItem(4, Icons.person_rounded, lang.getString('nav_profile')),
             ],
           ),
         ),

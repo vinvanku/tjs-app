@@ -32,7 +32,8 @@ class SupabaseService {
       var query = _client.from('jobs').select();
 
       if (category != null && category.isNotEmpty) {
-        query = query.eq('category', category);
+        // Use ilike for case-insensitive category matching
+        query = query.ilike('category', category.toLowerCase());
       }
 
       if (qualification != null && qualification.isNotEmpty) {
@@ -52,7 +53,6 @@ class SupabaseService {
       }
 
       final response = await query
-          .order('created_at', ascending: false)
           .order('created_at', ascending: false);
 
       return (response as List<dynamic>)

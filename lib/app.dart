@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/jobs_provider.dart';
+import 'providers/language_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -26,29 +27,18 @@ final GoRouter _router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) {
     final authProvider = context.read<AuthProvider>();
     final isAuthenticated = authProvider.isAuthenticated;
-    final isLoading = authProvider.isLoading;
-
-    // Don't redirect while auth state is still being determined
-    // This covers BOTH the 'initial' and 'loading' states
-    final isSplashRoute = state.matchedLocation == '/';
-    if (isSplashRoute) return null; // Always allow splash screen
-
     final isLoginRoute = state.matchedLocation == '/login';
-    final isOnboardingRoute = state.matchedLocation == '/onboarding';
+    final isSplashRoute = state.matchedLocation == '/';
 
-    // If still loading, don't redirect
-    if (isLoading) return null;
-
-    // If not authenticated and not on login/onboarding, redirect to login
-    if (!isAuthenticated && !isLoginRoute && !isOnboardingRoute) {
-      return '/login';
-    }
+    // Always allow splash
+    if (isSplashRoute) return null;
 
     // If authenticated and on login page, go to home
     if (isAuthenticated && isLoginRoute) {
       return '/home';
     }
 
+    // Allow all other routes for everyone (guest mode)
     return null;
   },
   routes: [
@@ -121,6 +111,7 @@ class TSJobsApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => JobsProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: MaterialApp.router(
         title: 'TS Jobs',
